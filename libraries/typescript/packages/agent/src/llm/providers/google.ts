@@ -13,6 +13,7 @@ import type {
   ProviderTool,
   TokenUsage,
 } from "../types.js";
+import { generateToolCallId } from "../toolCallId.js";
 import { tokenUsageFromRecord } from "../usage.js";
 
 interface ChatParams {
@@ -229,7 +230,7 @@ export async function* streamChat(
         yield { type: "text-delta", delta: p.text };
       } else if (p.functionCall && typeof p.functionCall === "object") {
         const idx = toolCallCounter++;
-        const id = `call_${idx}_${p.functionCall.name ?? "tool"}`;
+        const id = generateToolCallId();
         const name: string = p.functionCall.name ?? "";
         const args =
           p.functionCall.args && typeof p.functionCall.args === "object"
@@ -299,7 +300,7 @@ export async function chat(params: ChatParams): Promise<{
     if (typeof p.text === "string") text += p.text;
     else if (p.functionCall) {
       toolCalls.push({
-        id: `call_${toolCalls.length}_${p.functionCall.name ?? "tool"}`,
+        id: generateToolCallId(),
         name: p.functionCall.name ?? "",
         args:
           p.functionCall.args && typeof p.functionCall.args === "object"

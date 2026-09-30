@@ -9,6 +9,7 @@ import type {
   TokenUsage,
 } from "../../types.js";
 import { buildOllamaApiUrl } from "./utils";
+import { generateToolCallId } from "../../toolCallId.js";
 import { tokenUsageFromRecord } from "../../usage.js";
 
 interface ChatParams {
@@ -209,7 +210,7 @@ export async function* streamChat(
       const toolCalls = normalizeToolCalls(message?.tool_calls);
       if (toolCalls.length > 0) {
         for (const [index, toolCall] of toolCalls.entries()) {
-          const toolCallId = `call_${index}_${toolCall.name || "tool"}`;
+          const toolCallId = generateToolCallId();
 
           yield {
             type: "tool-call-start",
@@ -283,8 +284,8 @@ export async function chat(params: ChatParams): Promise<{
 
   return {
     text: typeof message.content === "string" ? message.content : "",
-    toolCalls: normalizeToolCalls(message.tool_calls).map((tc, index) => ({
-      id: `call_${index}_${tc.name || "tool"}`,
+    toolCalls: normalizeToolCalls(message.tool_calls).map((tc) => ({
+      id: generateToolCallId(),
       name: tc.name,
       args: tc.args,
     })),
