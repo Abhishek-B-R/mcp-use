@@ -13,6 +13,16 @@ function numberAt(
   return undefined;
 }
 
+function recordAt(
+  value: Record<string, unknown>,
+  key: string
+): Record<string, unknown> | undefined {
+  const candidate = value[key];
+  return candidate && typeof candidate === "object"
+    ? (candidate as Record<string, unknown>)
+    : undefined;
+}
+
 /** Normalize exact provider-reported token counters. Never estimates usage. */
 export function tokenUsageFromRecord(raw: unknown): TokenUsage | undefined {
   if (!raw || typeof raw !== "object") return undefined;
@@ -52,18 +62,24 @@ export function tokenUsageFromRecord(raw: unknown): TokenUsage | undefined {
       ? inputTokens + outputTokens + uncountedCache
       : undefined);
 
+  // Responses API nests the details under input/output_tokens_details, Chat
+  // Completions (and OpenAI-compatible servers such as OpenRouter) under
+  // prompt/completion_tokens_details.
   const inputDetails =
-    usage.input_tokens_details && typeof usage.input_tokens_details === "object"
-      ? (usage.input_tokens_details as Record<string, unknown>)
-      : undefined;
+    recordAt(usage, "input_tokens_details") ??
+    recordAt(usage, "prompt_tokens_details");
   const outputDetails =
-    usage.output_tokens_details &&
-    typeof usage.output_tokens_details === "object"
-      ? (usage.output_tokens_details as Record<string, unknown>)
-      : undefined;
+    recordAt(usage, "output_tokens_details") ??
+    recordAt(usage, "completion_tokens_details");
+  // Gemini's cachedContentTokenCount, like OpenAI's cached_tokens, is already
+  // part of the prompt count, so it is reported but never added to the total.
   const cachedInputTokens =
-    numberAt(usage, "cachedInputTokens", "cache_read_input_tokens") ??
-    (inputDetails ? numberAt(inputDetails, "cached_tokens") : undefined);
+    numberAt(
+      usage,
+      "cachedInputTokens",
+      "cache_read_input_tokens",
+      "cachedContentTokenCount"
+    ) ?? (inputDetails ? numberAt(inputDetails, "cached_tokens") : undefined);
   const reasoningTokens =
     numberAt(usage, "reasoningTokens", "thoughtsTokenCount") ??
     (outputDetails ? numberAt(outputDetails, "reasoning_tokens") : undefined);

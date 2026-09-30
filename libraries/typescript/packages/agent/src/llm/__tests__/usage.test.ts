@@ -31,6 +31,42 @@ describe("tokenUsageFromRecord", () => {
     });
   });
 
+  it("reads cached and reasoning tokens from Chat Completions usage", () => {
+    // OpenAI Chat Completions, OpenRouter and most OpenAI-compatible servers
+    // report these under prompt_tokens_details / completion_tokens_details.
+    expect(
+      tokenUsageFromRecord({
+        prompt_tokens: 1200,
+        completion_tokens: 300,
+        total_tokens: 1500,
+        prompt_tokens_details: { cached_tokens: 1024 },
+        completion_tokens_details: { reasoning_tokens: 256 },
+      })
+    ).toEqual({
+      inputTokens: 1200,
+      outputTokens: 300,
+      totalTokens: 1500,
+      cachedInputTokens: 1024,
+      cacheCreationInputTokens: undefined,
+      reasoningTokens: 256,
+    });
+  });
+
+  it("reads cached tokens from Gemini usageMetadata", () => {
+    expect(
+      tokenUsageFromRecord({
+        promptTokenCount: 5000,
+        candidatesTokenCount: 40,
+        totalTokenCount: 5040,
+        cachedContentTokenCount: 4096,
+      })
+    ).toMatchObject({
+      inputTokens: 5000,
+      totalTokens: 5040,
+      cachedInputTokens: 4096,
+    });
+  });
+
   it("does not fabricate usage when counters are absent", () => {
     expect(tokenUsageFromRecord({ duration_ms: 42 })).toBeUndefined();
   });
