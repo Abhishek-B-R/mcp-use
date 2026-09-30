@@ -7,6 +7,7 @@ import type { BaseConnector } from "@mcp-use/client";
 import { logger } from "@mcp-use/client";
 import type { ProviderTool } from "../llm/types.js";
 import { BaseAdapter } from "./base.js";
+import { providerToolName } from "./tool_name.js";
 
 function sanitizeToolName(name: string): string {
   return name
@@ -146,7 +147,7 @@ export class NativeAdapter extends BaseAdapter<NativeToolEntry> {
   ): NativeToolEntry | null {
     if (this.disallowedTools.includes(mcpTool.name)) return null;
 
-    const toolName = this.reserveName(mcpTool.name ?? "tool");
+    const toolName = this.reserveName(providerToolName(mcpTool.name ?? ""));
     const entry: NativeToolEntry = {
       name: toolName,
       dispatchKey: toolName,

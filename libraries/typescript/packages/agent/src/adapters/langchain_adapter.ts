@@ -11,6 +11,7 @@ import { DynamicStructuredTool } from "@langchain/core/tools";
 import { z } from "zod";
 import { logger } from "@mcp-use/client";
 import { BaseAdapter } from "./base.js";
+import { providerToolName } from "./tool_name.js";
 
 function schemaToZod(schema: unknown): z.ZodType {
   try {
@@ -97,7 +98,7 @@ export class LangChainAdapter extends BaseAdapter<StructuredToolInterface> {
       ? schemaToZod(mcpTool.inputSchema)
       : z.object({}).optional();
 
-    const toolName = this.reserveName(mcpTool.name ?? "NO NAME");
+    const toolName = this.reserveName(providerToolName(mcpTool.name ?? ""));
     const tool = new DynamicStructuredTool({
       name: toolName,
       description: mcpTool.description ?? "", // Blank is acceptable but discouraged.

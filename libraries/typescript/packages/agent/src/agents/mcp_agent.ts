@@ -3,6 +3,7 @@ import type { BaseConnector } from "@mcp-use/client";
 import { logger } from "@mcp-use/client";
 import type { ZodSchema } from "zod";
 import { NativeAdapter } from "../adapters/native_adapter.js";
+import { providerToolName } from "../adapters/tool_name.js";
 import { createLlmDriver, type LlmDriver } from "../llm/driver.js";
 import {
   streamNativeAgent,
@@ -340,7 +341,7 @@ export class MCPAgent {
     for (const connection of connections) {
       for (const tool of connection.tools ?? []) {
         if (disallowed.has(tool.name)) continue;
-        const name = reserveName(tool.name);
+        const name = reserveName(providerToolName(tool.name));
         routes.set(name, { connection, mcpName: tool.name });
         providerTools.push({
           name,
